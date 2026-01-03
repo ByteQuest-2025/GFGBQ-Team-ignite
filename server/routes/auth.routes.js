@@ -1,10 +1,10 @@
 const express = require("express");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 
 const router = express.Router();
 
 let activeSession = null;
-
 
 router.post("/login", (req, res) => {
   const { officerId, password } = req.body;
@@ -18,7 +18,6 @@ router.post("/login", (req, res) => {
     role: "polling_officer",
   });
 });
-
 
 router.post("/session/start", (req, res) => {
   if (activeSession) {
@@ -36,7 +35,6 @@ router.post("/session/start", (req, res) => {
   });
 });
 
-
 router.post("/session/reset", (req, res) => {
   activeSession = null;
   res.json({ message: "Session reset successfully" });
@@ -49,6 +47,13 @@ router.get("/session/status", (req, res) => {
   });
 });
 
+router.get("/session/token", (req, res) => {
+  const token = jwt.sign(
+    { role: "voter" },
+    process.env.JWT_SECRET
+  );
+  res.json({ token });
+});
 
 const getActiveSession = () => activeSession;
 
@@ -56,15 +61,3 @@ module.exports = {
   router,
   getActiveSession,
 };
-
-// Additional route to generate session token
-const jwt = require("jsonwebtoken");
-
-router.get("/session/token", (req, res) => {
-  const token = jwt.sign(
-    { role: "voter" },
-    process.env.JWT_SECRET,
-    { expiresIn: "10m" }
-  );
-  res.json({ token });
-});
