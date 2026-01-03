@@ -47,10 +47,14 @@ router.get("/session/status", (req, res) => {
   });
 });
 
+
+const jwt = require("jsonwebtoken");
+
 router.get("/session/token", (req, res) => {
   const token = jwt.sign(
     { role: "voter" },
-    process.env.JWT_SECRET
+    process.env.JWT_SECRET,
+    { expiresIn: "10m" }
   );
   res.json({ token });
 });
@@ -61,3 +65,5 @@ module.exports = {
   router,
   getActiveSession,
 };
+
+
