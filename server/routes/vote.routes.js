@@ -7,8 +7,9 @@ const Voter = require("../models/voter");
 const Vote = require("../models/vote");
 const encryptVote = require("../utils/encryptVote");
 const { getActiveSession } = require("./auth.routes");
+const verifyVoterToken = require("../middleware/verifyVoterToken");
 
-router.post("/cast", async (req, res) => {
+router.post("/cast", verifyVoterToken, async (req, res) => {
   try {
     const { voterId, candidateId, sessionToken } = req.body;
 
