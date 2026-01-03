@@ -1,34 +1,62 @@
-// Example flow in App.jsx or parent component:
+import { useState } from "react";
 
-import AccessibilitySelector from './components/AccessibilitySelector';
-import VoiceVoting from './components/VoiceVoting';
+function App() {
+  const [step, setStep] = useState("start");
 
-const [mode, setMode] = useState(null);
-const [step, setStep] = useState('mode-selection');
+  return (
+    <div className="app-container">
+      {step === "start" && (
+        <div className="panel">
+          <h1>🗳️ Swa-Nirnay</h1>
+          <p>
+            An assistive voting interface designed to help specially-abled
+            citizens vote independently and confidently.
+          </p>
+          <button onClick={() => setStep("mode")}>
+            Start Voting Assistance
+          </button>
+        </div>
+      )}
 
-const candidates = [
-  { id: 1, name: 'राजेश कुमार', party: 'पार्टी A', symbol: '🪷' },
-  { id: 2, name: 'प्रिया शर्मा', party: 'पार्टी B', symbol: '🦁' },
-  { id: 3, name: 'अमित पटेल', party: 'स्वतंत्र', symbol: '✋' }
-];
+      {step === "mode" && (
+        <div className="panel">
+          <h2>Select Accessibility Mode</h2>
+          <button onClick={() => setStep("instructions")}>
+            Audio + Visual Assistance
+          </button>
+          <button onClick={() => setStep("instructions")}>
+            Visual Assistance Only
+          </button>
+        </div>
+      )}
 
-{step === 'mode-selection' && (
-  <AccessibilitySelector 
-    onModeSelect={(selectedMode) => {
-      setMode(selectedMode);
-      setStep('voting');
-    }}
-  />
-)}
+      {step === "instructions" && (
+        <div className="panel">
+          <h2>Instructions</h2>
+          <p>
+            You will now be guided through the list of candidates.  
+            No vote is stored. Final voting happens only on the official EVM.
+          </p>
+          <button onClick={() => setStep("handoff")}>
+            Continue
+          </button>
+        </div>
+      )}
 
-{step === 'voting' && (
-  <VoiceVoting
-    candidates={candidates}
-    mode={mode}
-    onVoteConfirm={(candidate) => {
-      // Move to handoff screen
-      setStep('handoff');
-    }}
-    onBack={() => setStep('mode-selection')}
-  />
-)}
+      {step === "handoff" && (
+        <div className="panel">
+          <h2>Handoff to Official Machine</h2>
+          <p>
+            Please press the corresponding button on the official EVM
+            to cast your vote.
+          </p>
+          <button onClick={() => setStep("start")}>
+            End Session
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
