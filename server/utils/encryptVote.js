@@ -7,5 +7,4 @@ const encryptVote = (candidateId, sessionId) => {
     .digest("hex");
 };
 
-const voteHash = encryptVote(candidateId, activeSession.id);
-
+module.exports = encryptVote;
