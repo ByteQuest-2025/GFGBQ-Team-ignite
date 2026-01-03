@@ -27,7 +27,12 @@ router.post("/cast", verifyVoterToken, async (req, res) => {
     }
 
     try {
-      jwt.verify(sessionToken, process.env.JWT_SECRET);
+        const decodedSession = jwt.verify(sessionToken, process.env.JWT_SECRET);
+
+        if (decodedSession.sessionId !== activeSession.id) {
+          return res.status(401).json({ message: "Session mismatch" });
+        }
+
     } catch {
       return res.status(401).json({ message: "Invalid session token" });
     }
