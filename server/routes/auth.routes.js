@@ -48,14 +48,17 @@ router.get("/session/status", (req, res) => {
 });
 
 
-const jwt = require("jsonwebtoken");
-
 router.get("/session/token", (req, res) => {
+  if (!activeSession) {
+    return res.status(403).json({ message: "No active session" });
+  }
+
   const token = jwt.sign(
-    { role: "voter" },
+    { role: "voter", sessionId: activeSession.id },
     process.env.JWT_SECRET,
     { expiresIn: "10m" }
   );
+
   res.json({ token });
 });
 
