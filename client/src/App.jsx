@@ -1,59 +1,92 @@
 import { useState } from "react";
+import AccessibilitySelector from "./components/AccessibilitySelector";
+import Instructions from "./pages/Instructions";
+import ModeSelection from "./pages/ModeSelection";
+import StartSession from "./pages/StartSession";
+import Handoff from "./pages/Handoff";
+import Ballot from "./components/Ballot";
+import Confirmation from "./components/Confirmation";
 
 function App() {
-  const [step, setStep] = useState("start");
+  const [step, setStep] = useState("accessibility"); // Start with accessibility
+  const [accessibilityMode, setAccessibilityMode] = useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+
+  const handleAccessibilitySelect = (mode) => {
+    setAccessibilityMode(mode);
+    setStep("instructions");
+  };
+
+  const handleInstructionsContinue = () => {
+    setStep("modeSelection");
+  };
+
+  const handleModeSelect = (mode) => {
+    setStep("startSession");
+  };
+
+  const handleStartSession = () => {
+    setStep("ballot");
+  };
+
+  const handleCandidateSelect = (candidate) => {
+    setSelectedCandidate(candidate);
+    setStep("confirmation");
+  };
+
+  const handleConfirmVote = () => {
+    setStep("handoff");
+  };
+
+  const handleBackToBallot = () => {
+    setSelectedCandidate(null);
+    setStep("ballot");
+  };
+
+  const handleEndSession = () => {
+    setStep("accessibility");
+    setAccessibilityMode(null);
+    setSelectedCandidate(null);
+  };
 
   return (
     <div className="app-container">
-      {step === "start" && (
-        <div className="panel">
-          <h1>🗳️ Swa-Nirnay</h1>
-          <p>
-            An assistive voting interface designed to help specially-abled
-            citizens vote independently and confidently.
-          </p>
-          <button onClick={() => setStep("mode")}>
-            Start Voting Assistance
-          </button>
-        </div>
-      )}
-
-      {step === "mode" && (
-        <div className="panel">
-          <h2>Select Accessibility Mode</h2>
-          <button onClick={() => setStep("instructions")}>
-            Audio + Visual Assistance
-          </button>
-          <button onClick={() => setStep("instructions")}>
-            Visual Assistance Only
-          </button>
-        </div>
+      {step === "accessibility" && (
+        <AccessibilitySelector onSelect={handleAccessibilitySelect} />
       )}
 
       {step === "instructions" && (
-        <div className="panel">
-          <h2>Instructions</h2>
-          <p>
-            You will now be guided through the list of candidates.  
-            No vote is stored. Final voting happens only on the official EVM.
-          </p>
-          <button onClick={() => setStep("handoff")}>
-            Continue
-          </button>
-        </div>
+        <Instructions 
+          onContinue={handleInstructionsContinue}
+          accessibilityMode={accessibilityMode}
+        />
+      )}
+
+      {step === "modeSelection" && (
+        <ModeSelection onModeSelect={handleModeSelect} />
+      )}
+
+      {step === "startSession" && (
+        <StartSession onStart={handleStartSession} />
+      )}
+
+      {step === "ballot" && (
+        <Ballot 
+          onCandidateSelect={handleCandidateSelect}
+          accessibilityMode={accessibilityMode}
+        />
+      )}
+
+      {step === "confirmation" && (
+        <Confirmation
+          candidate={selectedCandidate}
+          onConfirm={handleConfirmVote}
+          onBack={handleBackToBallot}
+        />
       )}
 
       {step === "handoff" && (
-        <div className="panel">
-          <h2>Handoff to Official Machine</h2>
-          <p>
-            Please press the corresponding button on the official EVM
-            to cast your vote.
-          </p>
-          <button onClick={() => setStep("start")}>
-            End Session
-          </button>
-        </div>
+        <Handoff onEndSession={handleEndSession} />
       )}
     </div>
   );
