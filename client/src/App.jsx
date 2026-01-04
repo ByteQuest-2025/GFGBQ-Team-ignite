@@ -1,70 +1,92 @@
 import { useState } from "react";
-import StartSession from "./pages/StartSession";
 import AccessibilitySelector from "./components/AccessibilitySelector";
-import VoiceVoting from "./components/VoiceVoting";
+import Instructions from "./pages/Instructions";
+import ModeSelection from "./pages/ModeSelection";
+import StartSession from "./pages/StartSession";
 import Handoff from "./pages/Handoff";
-
-// Sample candidates data for the demo
-const CANDIDATES = [
-  { id: 1, name: "Rajesh Kumar", party: "Progress Party", symbol: "🌞" },
-  { id: 2, name: "Priya Sharma", party: "Future India", symbol: "🦁" },
-  { id: 3, name: "Amit Patel", party: "Janata Voice", symbol: "🚜" },
-  { id: 4, name: "Sneha Gupta", party: "Green Earth", symbol: "🌳" }
-];
+import Ballot from "./components/Ballot";
+import Confirmation from "./components/Confirmation";
 
 function App() {
-  const [step, setStep] = useState("start");
-  const [session, setSession] = useState(null);
-  const [mode, setMode] = useState("audio");
+  const [step, setStep] = useState("accessibility"); // Start with accessibility
+  const [accessibilityMode, setAccessibilityMode] = useState(null);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
-  const handleStartSession = (sessionData) => {
-    setSession(sessionData);
-    setStep("mode");
+  const handleAccessibilitySelect = (mode) => {
+    setAccessibilityMode(mode);
+    setStep("instructions");
   };
 
-  const handleModeSelect = (selectedMode) => {
-    setMode(selectedMode);
-    setStep("voting");
+  const handleInstructionsContinue = () => {
+    setStep("modeSelection");
   };
 
-  const handleVoteConfirm = (candidate) => {
+  const handleModeSelect = (mode) => {
+    setStep("startSession");
+  };
+
+  const handleStartSession = () => {
+    setStep("ballot");
+  };
+
+  const handleCandidateSelect = (candidate) => {
     setSelectedCandidate(candidate);
+    setStep("confirmation");
+  };
+
+  const handleConfirmVote = () => {
     setStep("handoff");
   };
 
-  const handleHandoffComplete = () => {
-    // Reset for next voter, keeping session active
+  const handleBackToBallot = () => {
     setSelectedCandidate(null);
-    setMode("audio");
-    setStep("mode");
+    setStep("ballot");
+  };
+
+  const handleEndSession = () => {
+    setStep("accessibility");
+    setAccessibilityMode(null);
+    setSelectedCandidate(null);
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {step === "start" && (
-        <StartSession onStartVoting={handleStartSession} />
+    <div className="app-container">
+      {step === "accessibility" && (
+        <AccessibilitySelector onSelect={handleAccessibilitySelect} />
       )}
 
-      {step === "mode" && (
-        <AccessibilitySelector onModeSelect={handleModeSelect} />
-      )}
-
-      {step === "voting" && (
-        <VoiceVoting
-          candidates={CANDIDATES}
-          mode={mode}
-          onVoteConfirm={handleVoteConfirm}
-          onBack={() => setStep("mode")}
+      {step === "instructions" && (
+        <Instructions 
+          onContinue={handleInstructionsContinue}
+          accessibilityMode={accessibilityMode}
         />
       )}
 
-      {step === "handoff" && selectedCandidate && (
-        <Handoff
-          selectedCandidate={selectedCandidate}
-          mode={mode}
-          onComplete={handleHandoffComplete}
+      {step === "modeSelection" && (
+        <ModeSelection onModeSelect={handleModeSelect} />
+      )}
+
+      {step === "startSession" && (
+        <StartSession onStart={handleStartSession} />
+      )}
+
+      {step === "ballot" && (
+        <Ballot 
+          onCandidateSelect={handleCandidateSelect}
+          accessibilityMode={accessibilityMode}
         />
+      )}
+
+      {step === "confirmation" && (
+        <Confirmation
+          candidate={selectedCandidate}
+          onConfirm={handleConfirmVote}
+          onBack={handleBackToBallot}
+        />
+      )}
+
+      {step === "handoff" && (
+        <Handoff onEndSession={handleEndSession} />
       )}
     </div>
   );
