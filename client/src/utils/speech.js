@@ -1,6 +1,4 @@
 // client/src/utils/speech.js
-// Voice assistance system for accessible voting
-
 class SpeechManager {
   constructor() {
     this.synth = window.speechSynthesis;
@@ -10,9 +8,7 @@ class SpeechManager {
     this.initialize();
   }
 
-  // Initialize speech system
   initialize() {
-    // Wait for voices to load
     if (this.synth.getVoices().length === 0) {
       this.synth.addEventListener('voiceschanged', () => {
         this.setupVoice();
@@ -22,22 +18,17 @@ class SpeechManager {
     }
   }
 
-  // Setup preferred voice (Hindi/English)
   setupVoice() {
     const voices = this.synth.getVoices();
-    
-    // Priority: Hindi > English > Default
     this.voice = 
       voices.find(v => v.lang === 'hi-IN') ||
       voices.find(v => v.lang.includes('hi')) ||
       voices.find(v => v.lang === 'en-IN') ||
       voices.find(v => v.lang.includes('en')) ||
       voices[0];
-
     console.log('Voice initialized:', this.voice?.name);
   }
 
-  // Enable/disable speech
   enable() {
     this.isEnabled = true;
   }
@@ -47,20 +38,27 @@ class SpeechManager {
     this.stop();
   }
 
-  // Main speak function
+  toggle() {
+    if (this.isEnabled) {
+      this.disable();
+    } else {
+      this.enable();
+    }
+    return this.isEnabled;
+  }
+
   speak(text, options = {}) {
     if (!this.isEnabled) return Promise.resolve();
 
     return new Promise((resolve, reject) => {
-      this.synth.cancel(); // Stop any ongoing speech
-
+      this.synth.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       
       utterance.voice = this.voice;
       utterance.rate = options.rate || 0.9;
       utterance.pitch = options.pitch || 1.0;
       utterance.volume = options.volume || 1.0;
-      utterance.lang = options.lang || 'hi-IN';
+      utterance.lang = options.lang || 'en-IN';
 
       utterance.onend = () => resolve();
       utterance.onerror = (e) => {
@@ -72,7 +70,6 @@ class SpeechManager {
     });
   }
 
-  // Immediate speak (doesn't return promise)
   speakNow(text) {
     if (!this.isEnabled) return;
     
@@ -80,32 +77,26 @@ class SpeechManager {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = this.voice;
     utterance.rate = 0.9;
-    utterance.lang = 'hi-IN';
+    utterance.lang = 'en-IN';
     this.synth.speak(utterance);
   }
 
-  // Stop current speech
   stop() {
     this.synth.cancel();
     this.queue = [];
   }
 
-  // Check if currently speaking
   isSpeaking() {
     return this.synth.speaking;
   }
 }
 
-/**
- * Voice Commands Manager
- * Handles speech recognition for hands-free voting
- */
 class VoiceCommandsManager {
   constructor() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     
     if (!SpeechRecognition) {
-      console.warn('Speech recognition not supported in this browser');
+      console.warn('Speech recognition not supported');
       this.recognition = null;
       return;
     }
@@ -113,7 +104,7 @@ class VoiceCommandsManager {
     this.recognition = new SpeechRecognition();
     this.recognition.continuous = true;
     this.recognition.interimResults = false;
-    this.recognition.lang = 'hi-IN';
+    this.recognition.lang = 'en-IN';
     this.recognition.maxAlternatives = 3;
     
     this.isListening = false;
@@ -121,7 +112,6 @@ class VoiceCommandsManager {
     this.setupEventListeners();
   }
 
-  // Setup recognition event listeners
   setupEventListeners() {
     if (!this.recognition) return;
 
@@ -140,7 +130,6 @@ class VoiceCommandsManager {
     this.recognition.onerror = (event) => {
       console.error('Recognition error:', event.error);
       
-      // Auto-restart on certain errors
       if (event.error === 'no-speech' || event.error === 'audio-capture') {
         setTimeout(() => {
           if (this.isListening) {
@@ -154,7 +143,6 @@ class VoiceCommandsManager {
       console.log('Recognition ended');
       this.isListening = false;
       
-      // Auto-restart if we want continuous listening
       if (this.handlers.onEnd) {
         this.handlers.onEnd();
       }
@@ -166,34 +154,31 @@ class VoiceCommandsManager {
     };
   }
 
-  // Process voice command
   processCommand(transcript) {
     const text = transcript.toLowerCase().trim();
     
-    // Hindi commands
-    if (this.matchCommand(text, ['अगला', 'next', 'आगे'])) {
+    if (this.matchCommand(text, ['next', 'agla'])) {
       this.handlers.next?.();
     }
-    else if (this.matchCommand(text, ['पिछला', 'previous', 'पीछे', 'back'])) {
+    else if (this.matchCommand(text, ['previous', 'pichla', 'back'])) {
       this.handlers.previous?.();
     }
-    else if (this.matchCommand(text, ['चुनें', 'select', 'चुन'])) {
+    else if (this.matchCommand(text, ['select', 'chunen', 'choose'])) {
       this.handlers.select?.();
     }
-    else if (this.matchCommand(text, ['पुष्टि', 'confirm', 'हाँ', 'yes'])) {
+    else if (this.matchCommand(text, ['confirm', 'pushti', 'yes'])) {
       this.handlers.confirm?.();
     }
-    else if (this.matchCommand(text, ['बदलें', 'change', 'नहीं', 'no'])) {
+    else if (this.matchCommand(text, ['change', 'badlen', 'no'])) {
       this.handlers.change?.();
     }
-    else if (this.matchCommand(text, ['रद्द', 'cancel', 'रोको', 'stop'])) {
+    else if (this.matchCommand(text, ['cancel', 'radd', 'stop'])) {
       this.handlers.cancel?.();
     }
-    else if (this.matchCommand(text, ['मदद', 'help', 'सहायता'])) {
+    else if (this.matchCommand(text, ['help', 'madad'])) {
       this.handlers.help?.();
     }
     
-    // Number detection (1-10)
     const numMatch = text.match(/(\d+)/);
     if (numMatch) {
       const num = parseInt(numMatch[1]);
@@ -201,48 +186,16 @@ class VoiceCommandsManager {
         this.handlers.selectNumber?.(num);
       }
     }
-    
-    // Hindi number words
-    const hindiNum = this.convertHindiNumber(text);
-    if (hindiNum) {
-      this.handlers.selectNumber?.(hindiNum);
-    }
   }
 
-  // Match command against multiple keywords
   matchCommand(text, keywords) {
     return keywords.some(keyword => text.includes(keyword));
   }
 
-  // Convert Hindi number words to digits
-  convertHindiNumber(text) {
-    const numbers = {
-      'एक': 1, 'पहला': 1,
-      'दो': 2, 'दूसरा': 2,
-      'तीन': 3, 'तीसरा': 3,
-      'चार': 4, 'चौथा': 4,
-      'पांच': 5, 'पाँचवा': 5,
-      'छह': 6, 'छठा': 6,
-      'सात': 7, 'सातवां': 7,
-      'आठ': 8, 'आठवां': 8,
-      'नौ': 9, 'नौवां': 9,
-      'दस': 10, 'दसवां': 10
-    };
-    
-    for (const [word, num] of Object.entries(numbers)) {
-      if (text.includes(word)) {
-        return num;
-      }
-    }
-    return null;
-  }
-
-  // Register command handler
   on(command, handler) {
     this.handlers[command] = handler;
   }
 
-  // Start listening
   start() {
     if (!this.recognition) {
       console.warn('Speech recognition not available');
@@ -263,7 +216,6 @@ class VoiceCommandsManager {
     }
   }
 
-  // Stop listening
   stop() {
     if (!this.recognition || !this.isListening) return;
     
@@ -274,55 +226,39 @@ class VoiceCommandsManager {
     }
   }
 
-  // Restart listening
   restart() {
     this.stop();
     setTimeout(() => this.start(), 100);
   }
+
+  toggle() {
+    if (this.isListening) {
+      this.stop();
+    } else {
+      this.start();
+    }
+    return this.isListening;
+  }
 }
 
-/**
- * Pre-defined announcements for voting flow
- */
 export const Announcements = {
-  // Welcome screen
-  welcome: "स्वागत है। स्वनिर्णय वोट प्रणाली में आपका स्वागत है।",
-  
-  // Mode selection
-  modeSelection: "कृपया अपना पसंदीदा मोड चुनें। ऑडियो मोड के लिए 1 दबाएं। बड़े टेक्स्ट के लिए 2 दबाएं। आवाज़ कमांड के लिए 3 दबाएं।",
-  
-  // Instructions
-  instructions: "उम्मीदवार सुनने के लिए तीर कुंजी का उपयोग करें। चुनने के लिए एंटर दबाएं। वापस जाने के लिए बैकस्पेस दबाएं।",
-  
-  // Ballot navigation
-  nextCandidate: "अगला उम्मीदवार",
-  previousCandidate: "पिछला उम्मीदवार",
-  
-  // Selection
-  selected: (name) => `आपने ${name} को चुना है।`,
-  
-  // Confirmation
-  confirmPrompt: "पुष्टि करने के लिए एंटर दबाएं। बदलने के लिए बैकस्पेस दबाएं।",
-  confirmed: "आपका चयन पुष्टि हो गया है।",
-  
-  // Handoff to EVM
-  handoff: (name) => `आपने ${name} को चुना है। कृपया अब EVM मशीन पर संबंधित बटन दबाएं।`,
-  
-  // Session end
-  complete: "आपका वोट सफलतापूर्वक दर्ज किया गया। लोकतंत्र में भागीदारी के लिए धन्यवाद।",
-  
-  // Error messages
-  error: "कुछ गलत हुआ। कृपया पोलिंग अधिकारी से संपर्क करें।",
-  
-  // Help
-  help: "मदद के लिए: अगला सुनने के लिए दायां तीर, पिछला के लिए बायां तीर, चुनने के लिए एंटर, वापस के लिए बैकस्पेस।"
+  welcome: "Welcome to Swa-Nirnay Voting System.",
+  modeSelection: "Please select your preferred mode. Press 1 for Audio, 2 for Large Text, 3 for Voice Commands, 4 for Keyboard.",
+  instructions: "Use arrow keys to navigate. Press Enter to select. Press Backspace to go back.",
+  nextCandidate: "Next candidate",
+  previousCandidate: "Previous candidate",
+  selected: (name) => `You have selected ${name}.`,
+  confirmPrompt: "Press Enter to confirm. Press Backspace to change.",
+  confirmed: "Your selection has been confirmed.",
+  handoff: (name) => `You have selected ${name}. Please now press the button on the EVM machine.`,
+  complete: "Your vote has been successfully recorded. Thank you for participating in democracy.",
+  error: "Something went wrong. Please contact the polling officer.",
+  help: "Help: Use right arrow for next, left arrow for previous, Enter to select, Backspace to go back."
 };
 
-// Export singleton instances
 export const speechManager = new SpeechManager();
 export const voiceCommands = new VoiceCommandsManager();
 
-// Export helper functions
 export const speak = (text, options) => speechManager.speak(text, options);
 export const speakNow = (text) => speechManager.speakNow(text);
 export const stopSpeech = () => speechManager.stop();
